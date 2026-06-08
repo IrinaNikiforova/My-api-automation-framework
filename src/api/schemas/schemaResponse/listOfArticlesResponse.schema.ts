@@ -1,22 +1,10 @@
-import { z } from "zod"
-import { AuthorSchema } from "./authorResponse.schema";
+import { z } from 'zod';
+import { BaseArticleSchema } from './articleResponse.schema';
 
+// List of articles response with pagination
 export const ListOfArticlesResponseSchema = z.object({
-  articles: z.array(
-    z.object({
-      slug: z.string(),
-      title: z.string(),
-      description: z.string(),
-      body: z.string(),
-      tagList: z.array(z.string()),
-      createdAt: z.string(),
-      updatedAt: z.string(),
-      favorited: z.boolean(),
-      favoritesCount: z.number(),
-      author: AuthorSchema
-    })
-  ),
-  articlesCount: z.number()
-})
-export type ListOfArticlesResponse =
-  z.infer<typeof ListOfArticlesResponseSchema>;
+  articles: z.array(BaseArticleSchema),
+  articlesCount: z.number().int().nonnegative(),
+});
+
+export type ListOfArticlesResponse = z.infer<typeof ListOfArticlesResponseSchema>;

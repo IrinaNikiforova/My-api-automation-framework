@@ -59,6 +59,7 @@ test('update new article', async ({ api }) => {
         }
     };
 
+
     const responseNewArticle = await createArticle(api, 201, articleData);
     
     const slug = responseNewArticle.article.slug;

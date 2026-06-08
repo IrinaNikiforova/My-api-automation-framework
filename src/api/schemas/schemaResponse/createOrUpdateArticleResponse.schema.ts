@@ -1,21 +1,10 @@
-import { z } from "zod";
-import { AuthorSchema } from "./authorResponse.schema";
+import { z } from 'zod';
+import { BaseArticleSchema } from './articleResponse.schema';
 
+// Create or update article response uses the base article schema
 export const CreateOrUpdateArticleResponseSchema = z.object({
-  article: z.object({
-    slug: z.string(),
-    title: z.string(),
-    description: z.string(),
-    tagList: z.array(z.string()),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    favorited: z.boolean(),
-    favoritesCount: z.number(),
-    author: AuthorSchema
-  })
+  article: BaseArticleSchema,
 });
 
-export const ArticleResponseSchema = CreateOrUpdateArticleResponseSchema.extend({
-  body: z.string()
-});
+export type CreateOrUpdateArticleResponse = z.infer<typeof CreateOrUpdateArticleResponseSchema>;
 

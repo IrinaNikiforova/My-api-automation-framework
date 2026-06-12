@@ -25,3 +25,11 @@ export async function updateArticle(api: RequestHandler,expectedStatusCode: numb
     console.log(response);
 return response;
 }
+
+export async function getArticle(api: RequestHandler, statusCode: number, slug: string) {
+    const response = await api
+        .path(`/articles/${slug}`)
+        .getRequest(statusCode);
+    console.log(response);
+    return response;
+}

@@ -1,0 +1,4 @@
+- Prefer reusable API helpers over direct RequestHandler usage in tests
+- Keep tests business-focused, not technical
+- Avoid duplication of payload construction
+- Always align with existing project conventions

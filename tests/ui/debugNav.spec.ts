@@ -1,33 +1,22 @@
-import { test, expect } from '@playwright/test';
-import { HeaderComponent } from '../../src/components/headerComponent';
-import { before, beforeEach } from 'node:test';
-import { SignIn} from '../../src/pages/signinPage'
+// import { test, expect } from '@playwright/test';
 import { config } from '../../api-test.config';
+import { test } from '../../src/fixtures/ui.fixture'
 
 test.beforeEach(async ({ page }) => {
 
-    await page.goto(
-        'https://conduit.bondaracademy.com/'
-    );
+    await page.goto('/');
     
 });
 
-test('check header locators', async ({ page }) => {
+test('check header locators', async ({ header }) => {
 
-    const header = new HeaderComponent(page);
-
-    await header.clickSignIn()
-    
-    await header.clickHome()
-    
-    await header.clickSingOut()
+    await header.clickSignIn();  
+    await header.clickHome();
+    await header.clickSingOut();
     
 });
 
-test('login', async ({ page }) =>{
-
-    const header = new HeaderComponent(page);
-    const signInPage = new SignIn(page)
+test('login', async ({ header, signInPage }) =>{
 
     await header.clickSignIn();
     await signInPage.waitForPageLoaded();
@@ -35,5 +24,4 @@ test('login', async ({ page }) =>{
     await signInPage.fillPassword(config.userPassword);
     await signInPage.clickSignInButton();
 
-    
 })

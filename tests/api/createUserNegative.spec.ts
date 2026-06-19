@@ -1,4 +1,4 @@
-import { test } from '../../src/fixtures/fixture';
+import { test } from '../../src/fixtures/api.fixture';
 import { faker } from '@faker-js/faker';
 import { CreateUserRequest } from '../../src/api/schemas/schemaRequest/createUserRequest.schema';
 import { createUser } from '../../src/api/user';

@@ -1,4 +1,4 @@
-import { test } from '../../src/fixtures/fixture';
+import { test } from '../../src/fixtures/api.fixture';
 import { expect } from '../../src/utils/custom-expect';
 import { faker } from '@faker-js/faker';
 import { createArticle, deleteArticle, updateArticle , getArticle} from '../../src/api/articles';

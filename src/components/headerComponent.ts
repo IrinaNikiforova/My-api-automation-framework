@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { expect, Page, Locator } from '@playwright/test';
 
 
 export class HeaderComponent {
@@ -44,6 +44,20 @@ export class HeaderComponent {
     async clickSingOut(): Promise<void> {
 
         await this.signOutLink.click();
+
+    }
+
+
+    async expectUserLoggedIn(): Promise<void> {
+
+        await expect(this.signInLink).toBeHidden();
+
+    }
+
+
+    async expectUserLoggedOut(): Promise<void> {
+
+        await expect(this.signInLink).toBeVisible();
 
     }
 

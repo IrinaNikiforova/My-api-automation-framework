@@ -19,16 +19,34 @@ There is no build/lint step — tests are run directly via the Playwright TypeSc
 
 ## Environment
 
-`api-test.config.ts` resolves config from `TEST_ENV` (default `dev`). It loads `.env` via dotenv. `prod` reads credentials from `PROD_USERNAME` / `PROD_PASSWORD`. The target system under test is the Conduit API at `https://conduit-api.bondaracademy.com/api`.
+`api-test.config.ts` resolves config from `TEST_ENV` (default `dev`). It loads `.env` via dotenv. `prod` reads credentials from `PROD_USERNAME` / `PROD_PASSWORD`. The system under test is the Conduit demo app:
+- **API** — `https://conduit-api.bondaracademy.com/api` (`config.apiUrl`, used by API tests).
+- **Web UI** — `https://conduit.bondaracademy.com` (`baseURL` in `playwright.config.ts`, used by UI tests via `page.goto('/')`).
+
+`playwright.config.ts` defines two projects: `api-test` (`tests/api`) and `ui-test` (`tests/ui`, chromium).
 
 ## Architecture
 
-This is a Playwright API-testing framework (UI tests are scaffolded but largely empty). The design enforces a strict layering — tests never touch HTTP directly.
+This is primarily a Playwright API-testing framework, with a growing UI (Page Object) layer. The API side enforces strict layering — tests never touch HTTP directly.
 
-**Layered request flow:**
-1. **Fixtures** ([src/fixtures/fixture.ts](src/fixtures/fixture.ts)) — extends Playwright's `test` with an `api` fixture (a `RequestHandler`) and a worker-scoped `authToken`. The token is created once per worker via [helpers/createToken.ts](helpers/createToken.ts) (logs in, writes token to `test-data/auth.txt`) and injected into every request. Always import `test` from this fixture, not from `@playwright/test`.
-2. **API service wrappers** ([src/api/articles.ts](src/api/articles.ts), [src/api/user.ts](src/api/user.ts)) — one function per endpoint operation (`createArticle`, `updateArticle`, `deleteArticle`, `getArticle`, `createUser`). Tests MUST call these, never `RequestHandler` directly (exception: testing `RequestHandler` itself). The expected status code is always an explicit argument so wrappers serve both positive and negative tests — wrappers must never assume success.
-3. **RequestHandler** ([src/utils/requestHandler.ts](src/utils/requestHandler.ts)) — a chainable fluent builder: `.path()`, `.body()`, `.headers()`, `.params()`, `.url()`, `.clearAuth()`, then a terminal `.getRequest(status)` / `.postRequest(status)` / `.putRequest(status)` / `.deleteRequest(status)`. Auth header is auto-attached unless `.clearAuth()` is called (used for anonymous user creation). Each terminal call validates the status code, logs via `APILogger`, then calls `cleanUpFields()` to reset builder state — so an instance is safely reusable across calls.
+### Fixtures (composed, multiple `test` exports)
+
+Fixtures are split across [src/fixtures/](src/fixtures/) and composed by extension. Pick the right `test` import for the kind of test you write:
+- [auth.fixture.ts](src/fixtures/auth.fixture.ts) — base layer; worker-scoped `authToken`, created once per worker via [helpers/createToken.ts](helpers/createToken.ts) (logs in, writes token to `test-data/auth.txt`).
+- [api.fixture.ts](src/fixtures/api.fixture.ts) — extends `auth.fixture`; adds `api` (a `RequestHandler` wired with the auth token + logger) and `config`. **API tests import `test` from here.**
+- [ui.fixture.ts](src/fixtures/ui.fixture.ts) — extends base `@playwright/test`; provides Page Object / component fixtures (`header`, `signInPage`, `editArticlePage`, …). **UI tests import `test` from here.**
+- [types.ts](src/fixtures/types.ts) — the `ApiFixtures` / `AuthFixtures` / `UIFixtures` type definitions backing the above.
+
+Never import `test` from `@playwright/test` directly in a test file.
+
+### API layered request flow
+1. **API service wrappers** ([src/api/articles.ts](src/api/articles.ts), [src/api/user.ts](src/api/user.ts)) — one function per endpoint operation (`createArticle`, `updateArticle`, `deleteArticle`, `getArticle`, `createUser`). Tests MUST call these, never `RequestHandler` directly (exception: testing `RequestHandler` itself). The expected status code is always an explicit argument so wrappers serve both positive and negative tests — wrappers must never assume success.
+2. **RequestHandler** ([src/utils/requestHandler.ts](src/utils/requestHandler.ts)) — a chainable fluent builder: `.path()`, `.body()`, `.headers()`, `.params()`, `.url()`, `.clearAuth()`, then a terminal `.getRequest(status)` / `.postRequest(status)` / `.putRequest(status)` / `.deleteRequest(status)`. Auth header is auto-attached unless `.clearAuth()` is called (used for anonymous user creation). Each terminal call validates the status code, logs via `APILogger`, then calls `cleanUpFields()` to reset builder state — so an instance is safely reusable across calls.
+
+### UI Page Object layer
+- [src/pages/](src/pages/) — Page Objects (`SignIn`, `EditArticlePage`, `HomePage`, …) extend the abstract [basePage](src/pages/basePage.ts), which holds the `Page` and shared navigation helpers (`navigate`, `reload`, `waitForPageLoaded`, `takeScreenshot`). Each page keeps its `Locator`s `private readonly`, defined in the constructor, and exposes intent-named action methods (`fillEmail`, `clickPublishArticleButton`) plus a `waitUntilLoaded()` visibility check. Tests never reach into locators directly.
+- [src/components/](src/components/) — reusable cross-page widgets (e.g. [HeaderComponent](src/components/headerComponent.ts)) following the same pattern.
+- Page Objects/components are exposed to UI tests as fixtures from `ui.fixture.ts` — request them by name in the test signature rather than constructing them.
 
 **Validation & error reporting:**
 - [src/utils/custom-expect.ts](src/utils/custom-expect.ts) extends Playwright's `expect` with `shouldEqual()`, which appends recent API request/response logs to failure messages. Import `expect` from this file (not `@playwright/test`) to get it.

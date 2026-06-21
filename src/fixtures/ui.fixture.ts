@@ -5,6 +5,7 @@ import { SignIn } from '../pages/signinPage';
 // import { SignUp } from '../pages/signUpPage';
 import { HomePage } from '../pages/homePage';
 import { EditArticlePage } from '../pages/editArticlePage';
+import { ArticleDetailsPage } from '../pages/articleDetailsPage';
 
 
 type Pages = {
@@ -14,6 +15,7 @@ type Pages = {
     homePage: HomePage;
     editArticlePage: EditArticlePage;
     loginViaToken: void;
+    articleDetailsPage: ArticleDetailsPage;
 };
 
 
@@ -52,6 +54,9 @@ export const test = base.extend<Pages>({
     editArticlePage: async ({page}, use) => {
         await use(new EditArticlePage(page));
     },
-
+ 
+    articleDetailsPage: async ({page}, use) => {
+        await use(new ArticleDetailsPage(page));
+    },
 
 });
